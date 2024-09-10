@@ -11,6 +11,11 @@ should be sufficient for creating a batch of data and saving it to disk in `.npz
 pip install -r requirements.txt
 ```
 
+For more info on how to generate data, try:
+```bash
+./wfs_information/generate.py --help
+```
+
 The system modelled is summarised as thus:
 ```mermaid
 graph LR
