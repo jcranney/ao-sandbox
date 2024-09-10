@@ -9,6 +9,7 @@ In `./wfs_information` you can find scripts to generate a dataset capturing the 
 should be sufficient for creating a batch of data and saving it to disk in `.npz` format, but you may need to install the requirements first:
 ```bash
 pip install -r requirements.txt
+```
 
 The system modelled is summarised as thus:
 ```mermaid
