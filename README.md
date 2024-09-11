@@ -16,7 +16,7 @@ For more info on how to generate data, try:
 ./wfs_information/generate.py --help
 ```
 
-The system modelled is summarised as thus:
+The system modelled is:
 ```mermaid
 graph LR
 subgraph System
@@ -25,4 +25,17 @@ subgraph System
 end
 phase-->data[data.npz]
 img-->data
+```
+with the option to pass the `--distribution uniform` setting to change the atmosphere for a uniform random distribtion with approximately equivalent strength.
+
+#### Examples
+- to create a set of training tuples `(modes,images)` saved to the file `out.npz`, you can do any of the following:
+```bash
+./generate.py run
+./generate.py run -o out.npz  # default
+./generate.py run --distribution vonkarman  # default
+```
+- The strength of the turbulence is parameterised by the ratio of the telescope diameter and r0 at the imaging wavelength, all of this is summarised into a single argument: `dr0`, which has a default value of 1.0, giving a wavefront error in either distribution method of close to 1.0 (less in the case of von Karman turbulence because of the finite outer scale - L0=10.0D in our case). You can reduce the effect of the atmosphere by decreasing D/r0, e.g.:
+```bash
+./generate.py run --dr0 0.1
 ```
