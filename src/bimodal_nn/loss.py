@@ -1,8 +1,16 @@
+import os
 import numpy as np
 import torch
 
-zernikes = torch.tensor(np.load("zernikes.npy").astype(np.float32))
-print(zernikes.shape)
+if os.environ.get("TORCH_DEVICE"):
+    device = int(os.environ["TORCH_DEVICE"])
+else:
+    device = "cpu"
+
+zernikes = torch.tensor(
+    np.load("zernikes.npy").astype(np.float32),
+    device=device,
+)
 
 def loss_min_proj(pred, y):
     phi_pred = torch.einsum("ijk,...i->...jk", zernikes, pred)

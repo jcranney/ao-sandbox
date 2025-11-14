@@ -2,16 +2,21 @@ from data import Data
 from model import SimpleNet
 from loss import loss_min_proj as loss_fn
 import torch
-from torch import nn, optim
+from torch import optim
 import matplotlib.pyplot as plt
-import numpy as np
+import os
+
+if os.environ.get("TORCH_DEVICE"):
+    device = int(os.environ["TORCH_DEVICE"])
+else:
+    device = "cpu"
 
 learning_rate = 1e-3
 batch_size = 1000
 epochs = 50
 
 data = Data("out.npz", batch_size=batch_size)
-model = SimpleNet()
+model = SimpleNet().to(device=device)
 
 try:
     model.load_state_dict(torch.load("backup.model", weights_only=True))

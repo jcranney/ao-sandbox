@@ -1,8 +1,14 @@
+import torch
+import os
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
+if os.environ.get("TORCH_DEVICE"):
+    device = int(os.environ["TORCH_DEVICE"])
+else:
+    device = "cpu"
 
 class CustomImageDataset(Dataset):
     def __init__(self, imgs, modes):
@@ -29,8 +35,8 @@ class Data(BaseModel):
     ):
         super().__init__(*args, **kwargs)
         data = np.load(filename)
-        modes = data["modes"].astype(np.float32)
-        imgs = data["imgs"].astype(np.float32)
+        modes = torch.tensor(data["modes"].astype(np.float32), device=device)
+        imgs = torch.tensor(data["imgs"].astype(np.float32), device=device)
         
         idx = int(len(modes)*split)
         self.train_dataloader = DataLoader(
