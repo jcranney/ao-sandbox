@@ -2,9 +2,9 @@
 Scripts and tools for generating adaptive optics data for statistically analysis and exploration
 
 ## WFS *information* data
-In `./wfs_information` you can find scripts to generate a dataset capturing the wavefront sensing process for some inputs. Running:
+In `./src/wfs_information` you can find scripts to generate a dataset capturing the wavefront sensing process for some inputs. Running:
 ```bash
-./wfs_information/generate.py run
+./src/wfs_information/generate.py run
 ```
 should be sufficient for creating a batch of data and saving it to disk in `.npz` format, but you may need to install the requirements first:
 ```bash
@@ -13,7 +13,7 @@ pip install -r requirements.txt
 
 For more info on how to generate data, try:
 ```bash
-./wfs_information/generate.py --help
+./src/wfs_information/generate.py --help
 ```
 
 The system modelled is:

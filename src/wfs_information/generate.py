@@ -50,12 +50,17 @@ def main():
         "--nbatches", "-n", type=int, default=1000,
         help="internal number of batches for data generation",
     )
+    parser.add_argument(
+        "--saveproj", "-s",
+        help="flag for saving projection matrices", action="count"
+    )
     args = parser.parse_args()
     if args.command == "run":
         gen = generate_data(
             nmodes=args.modes, pupdiam=args.pupdiam,
             distribution=args.distribution, nsamples=args.batchsize,
             dr0=args.dr0, imwidth=args.imwidth, sampling=args.sampling,
+            saveproj=args.saveproj,
         )
         modes, imgs = next(gen)
         for _ in tqdm.tqdm(range(args.nbatches)):
@@ -71,12 +76,18 @@ def main():
 
 def generate_data(*, nmodes: int, pupdiam: int, distribution: str,
                   nsamples: int, dr0: float, imwidth: int, sampling: float,
-                  verbosity: int = 0):
+                  verbosity: int = 0, saveproj: bool = False):
     def log(message):
         if verbosity:
             print(message)
     log("initialising zernike modes")
     zernikes = aotools.zernikeArray(nmodes, pupdiam, norm="rms")
+    if saveproj:
+        filename = "./zernikes.npy"
+        np.save(
+            filename, zernikes,
+        )
+        log(f"saved projection matrix to {filename}")
     pupil = (zernikes[0, :, :] == 1.0)  # the 0th zernike makes a great pupil
     half_pix_shift = np.array(np.mgrid[:pupdiam, :pupdiam]).sum(axis=0)
     half_pix_shift = -half_pix_shift/pupdiam*2*np.pi/4
@@ -97,6 +108,10 @@ def generate_data(*, nmodes: int, pupdiam: int, distribution: str,
         log(f"mean uncropped image sum: {imgs.sum(axis=1).sum(axis=1).mean()}")
         imgs = imgs[:, im_outer:-im_outer, im_outer:-im_outer]
         return imgs
+
+    cov_factor: np.ndarray | None = None
+    phase_to_modes: np.ndarray | None = None
+    modes: np.ndarray
 
     if distribution == "vonkarman":
         log("building von Karman covariance matrix")
@@ -127,7 +142,10 @@ def generate_data(*, nmodes: int, pupdiam: int, distribution: str,
             modes = (np.random.random([nsamples, nmodes])-0.5)
             modes /= modes.std()
             modes *= (dr0)**(5/6) / nmodes**0.5
+            yield modes, modes_to_images(modes)
         elif distribution == "vonkarman":
+            if phase_to_modes is None or cov_factor is None:
+                raise RuntimeError("unreachable")
             log("creating random phase screens")
             phases = np.einsum(
                 "ij,lj->li",
@@ -138,7 +156,7 @@ def generate_data(*, nmodes: int, pupdiam: int, distribution: str,
             log("projecting phase to modes")
             modes = (phase_to_modes @ phases[:, pupil].T).T
             log("filtering phase to modal space")
-        yield modes, modes_to_images(modes)
+            yield modes, modes_to_images(modes)
 
 
 def apply_noise(img, flux=200.0, ron=0.5):
