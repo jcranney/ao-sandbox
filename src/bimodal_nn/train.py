@@ -79,6 +79,7 @@ def test_loop(dataloader, model, loss_fn):
     test_loss /= num_batches
     print(f"Test Error: \n Avg loss: {test_loss:>8f} \n")
 
+
 test_loop(data.test_dataloader, None, loss_fn)
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
