@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "aotools>=1.0.7",
+    "ipython>=9.7.0",
     "matplotlib>=3.10.7",
     "numpy<2",
     "pydantic>=2.12.4",

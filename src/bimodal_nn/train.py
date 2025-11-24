@@ -1,6 +1,7 @@
 from data import Data
 from model import SimpleNet
 from loss import loss_min_proj as loss_fn
+# from loss import loss_abs_only as loss_fn
 import torch
 from torch import optim
 import matplotlib.pyplot as plt
@@ -18,10 +19,10 @@ epochs = 50
 data = Data("out.npz", batch_size=batch_size)
 model = SimpleNet().to(device=device)
 
-try:
-    model.load_state_dict(torch.load("backup.model", weights_only=True))
-except FileNotFoundError:
-    print("no backup model found, starting from scratch")
+# try:
+#     model.load_state_dict(torch.load("backup.model", weights_only=True))
+# except FileNotFoundError:
+#     print("no backup model found, starting from scratch")
 
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -56,7 +57,7 @@ def test_loop(dataloader, model, loss_fn):
 
     # Evaluating the model with torch.no_grad() ensures that no gradients are computed during test mode
     # also serves to reduce unnecessary gradient computations and memory usage for tensors with requires_grad=True
-    err_modal = []
+    out_list = []
     with torch.no_grad():
         for X, y in dataloader:
             if model:
@@ -64,9 +65,16 @@ def test_loop(dataloader, model, loss_fn):
             else:
                 pred = y*0.0
             test_loss += loss_fn(pred, y).item()
-            err_modal.append((pred.abs()-y.abs()).abs().mean(dim=0)[None, ...])
-    err = torch.concat(err_modal, dim=0).mean(dim=0)
-    plt.plot(err)
+            out_list.append(torch.concat([y[None, ...],pred[None, ...]], dim=0))
+    out = torch.concat(out_list, dim=1)
+    y_true = out[0, ...].std(dim=0)
+    y_pred = out[1, ...].std(dim=0)
+    err = (out[0, ...] - out[1, ...]).std(dim=0)
+    plt.close("all")
+    plt.plot(y_true.T, "b", label="y_true")
+    plt.plot(y_pred.T, "g", label="y_pred")
+    plt.plot(err.T, "r", label="err")
+    plt.legend()
     plt.savefig("tmp.png")
     test_loss /= num_batches
     print(f"Test Error: \n Avg loss: {test_loss:>8f} \n")

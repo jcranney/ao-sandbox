@@ -14,6 +14,7 @@ class CustomImageDataset(Dataset):
     def __init__(self, imgs, modes):
         self.imgs = imgs
         self.modes = modes
+        self.modes[:, 0] = 0.0
 
     def __len__(self):
         return len(self.imgs)
