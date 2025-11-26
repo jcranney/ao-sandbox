@@ -18,12 +18,26 @@ def loss_min_proj(pred, y):
     phi_pred_a = phi_from_modes(pred)
     phi_pred_b = get_phi_cosolution(phi_pred_a)
     phi_y = phi_from_modes(y)
-    l1 = ((phi_pred_a - phi_y)**2)[..., pupil].mean()
-    l2 = ((phi_pred_b - phi_y)**2)[..., pupil].mean()
-    return torch.min(l1, l2)
+    l1 = ((phi_pred_a - phi_y)[..., pupil]**2).mean(dim=1)
+    l2 = ((phi_pred_b - phi_y)[..., pupil]**2).mean(dim=1)
+    return torch.amin(torch.stack([l1, l2]), dim=0).mean()
+
+# Ideas for loss function:
+#  - penalise even modes more strongly than odd
+
+def loss_min_modal(pred, y):
+    if pred.shape[1] != 10:
+        raise RuntimeError("Only 10 modes implemented so far")
+    pred_a = pred
+    pred_b = pred.clone()
+    pred_b[:, 3:6] *= -1.0
+    l1 = ((pred_a - y)**2).mean(dim=1)
+    l2 = ((pred_b - y)**2).mean(dim=1)
+    return torch.amin(torch.stack([l1, l2]), dim=0).mean()
+
 
 def loss_abs_only(pred, y):
-    return ((pred.abs() - y.abs())**2).mean()
+    return ((pred.abs() - y.abs()).abs()).mean()
 
 def get_phi_cosolution(phi_a):
     phi_b = -torch.flip(phi_a, (-2, -1))
@@ -32,6 +46,14 @@ def get_phi_cosolution(phi_a):
 def phi_from_modes(modes):
     phi = torch.einsum("ijk,...i->...jk", zernikes, modes)
     return phi
+
+def rms_wfe(pred, y):
+    phi_pred_a = phi_from_modes(pred)
+    phi_pred_b = get_phi_cosolution(phi_pred_a)
+    phi_y = phi_from_modes(y)
+    l1 = ((phi_pred_a - phi_y)[..., pupil]**2).mean(dim=1)
+    l2 = ((phi_pred_b - phi_y)[..., pupil]**2).mean(dim=1)
+    return torch.amin(torch.stack([l1, l2]), dim=0).mean()**0.5
 
 
 if __name__ == "__main__":

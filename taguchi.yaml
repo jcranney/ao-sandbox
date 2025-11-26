@@ -1,0 +1,19 @@
+command: uv run src/bimodal_nn/train.py
+TORCH_DEVICE:
+ - 0
+LEARNING_RATE:
+ - 2.7E-2
+ - 9E-4
+ - 3E-4
+BATCH_SIZE:
+ - 2700
+ - 900
+ - 300
+MODEL_WIDTH:
+ - 128
+ - 256
+ - 512
+MODEL_DEPTH:
+ - 2
+ - 3
+ - 4
