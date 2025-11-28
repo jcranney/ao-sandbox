@@ -1,8 +1,8 @@
 from torch import nn
 import os
 
-WIDTH = int(os.environ.get("WIDTH", default="128"))
-DEPTH = int(os.environ.get("DEPTH", default="2"))
+WIDTH = int(os.environ.get("MODEL_WIDTH", default="128"))
+DEPTH = int(os.environ.get("MODEL_DEPTH", default="2"))
 
 class SimpleNet(nn.Module):
     width: int = WIDTH

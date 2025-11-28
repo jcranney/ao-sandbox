@@ -13,7 +13,9 @@ from torch.utils.tensorboard import SummaryWriter
 
 learning_rate = float(os.environ.get("LEARNING_RATE", default="1e-3"))
 batch_size = int(os.environ.get("BATCH_SIZE", default="1000"))
-epochs = 100
+epochs = 1000
+DO_PLOTS: bool = False
+
 
 if os.environ.get("TORCH_DEVICE"):
     device = int(os.environ["TORCH_DEVICE"])
@@ -96,48 +98,49 @@ def test_loop(dataloader, model, loss_fn):
             wfe += rms_wfe(pred, y).item()
     y_true, y_pred = torch.concat(out_list, dim=1)
     # plot the modal scatters:
-    plt.close("all")
-    fig, axs = plt.subplots(4, 3, figsize=(10,10))
-    for i, ax in enumerate(axs.flatten()[:10]):
-        ax.plot(y_true[:, i], y_pred[:, i], "k.")
-        ax.axline((0.0, 0.0), slope=1.0)
-        ax.set_title(f"mode: {i}")
-        ax.set_aspect("equal")
-        range = 1.1*y_true[:, i].abs().max()+1e-3
-        ax.set_xlim([-range, range])
-        ax.set_ylim([-range, range])
-    plt.tight_layout()
-    plt.savefig("tmp2.png", dpi=300)
-    
-    
-    # y_true.shape = [NSAMPLES, NMODES]
-    NSAMPLES, NMODES = y_true.shape
-    y_true_std = y_true.std(dim=0)
-    y_pred_std = y_pred.std(dim=0)
-    y_pred_flip = y_pred.clone()
-    if y_pred_flip.shape[1] > 10:
-        raise ValueError(
-            "Number of modes is more than 10, so the error calculation"
-            " will be invalid."
-        )
-    y_pred_flip[:, 3:6] *= -1.0
-    err_std = torch.amin(
-        torch.stack([
-            y_pred - y_true,
-            y_pred_flip - y_true,
-        ])**2,
-        dim=0
-    ).mean(dim=0)**0.5
+    if DO_PLOTS:
+        plt.close("all")
+        _, axs = plt.subplots(4, 3, figsize=(10,10))
+        for i, ax in enumerate(axs.flatten()[:10]):
+            ax.plot(y_true[:, i], y_pred[:, i], "k.")
+            ax.axline((0.0, 0.0), slope=1.0)
+            ax.set_title(f"mode: {i}")
+            ax.set_aspect("equal")
+            range = 1.1*y_true[:, i].abs().max()+1e-3
+            ax.set_xlim([-range, range])
+            ax.set_ylim([-range, range])
+        plt.tight_layout()
+        plt.savefig("tmp2.png", dpi=300)
+        
+        
+        # y_true.shape = [NSAMPLES, NMODES]
+        y_true_std = y_true.std(dim=0)
+        y_pred_std = y_pred.std(dim=0)
+        y_pred_flip = y_pred.clone()
+        if y_pred_flip.shape[1] > 10:
+            raise ValueError(
+                "Number of modes is more than 10, so the error calculation"
+                " will be invalid."
+            )
+        y_pred_flip[:, 3:6] *= -1.0
+        err_std = torch.amin(
+            torch.stack([
+                y_pred - y_true,
+                y_pred_flip - y_true,
+            ])**2,
+            dim=0
+        ).mean(dim=0)**0.5
 
-    plt.close("all")
-    plt.plot(y_true_std, label="y_true")
-    plt.plot(y_pred_std, label="y_pred")
-    plt.plot(err_std, label="err")
-    plt.xlabel("Zernike mode (#)")
-    plt.ylabel("Mode amplitude RMS (rad)")
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig("tmp.png", dpi=200)
+        plt.close("all")
+        plt.plot(y_true_std, label="y_true")
+        plt.plot(y_pred_std, label="y_pred")
+        plt.plot(err_std, label="err")
+        plt.xlabel("Zernike mode (#)")
+        plt.ylabel("Mode amplitude RMS (rad)")
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig("tmp.png", dpi=200)
+    
     test_loss /= num_batches
     print(f"Test Error: \n Avg loss: {test_loss:>8f} \n")
     wfe /= num_batches
@@ -157,4 +160,4 @@ for t in range(epochs):
 print("Done!")
 print(f"{test_loss:0.4e}")
 # not sure if this will work but who cares:
-# torch.save(model.state_dict(), "backup.model")
+torch.save(model.state_dict(), "backup.model")
